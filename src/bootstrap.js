@@ -12,6 +12,19 @@ const {
   about,
 } = require("../data/data.json");
 
+async function reactivateAdminUser() {
+  const adminEmail = 'philipe_azv@hotmail.com';
+  
+  const adminUser = await strapi.query('user', 'admin').findOne({ email: adminEmail });
+
+  if (adminUser) {
+    await strapi.query('user', 'admin').update({ id: adminUser.id }, { blocked: false });
+    console.log(`Usuário administrador com o e-mail '${adminEmail}' reativado com sucesso.`);
+  } else {
+    console.error(`Usuário administrador com o e-mail '${adminEmail}' não encontrado.`);
+  }
+}
+
 async function isFirstRun() {
   const pluginStore = strapi.store({
     environment: strapi.config.environment,
@@ -252,6 +265,7 @@ module.exports = async () => {
   if (shouldImportSeedData) {
     try {
       console.log("Setting up the template...");
+      await reactivateAdminUser();
       await importSeedData();
       console.log("Ready to go");
     } catch (error) {
