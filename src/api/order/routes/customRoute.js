@@ -1,8 +1,8 @@
 module.exports = {
     routes: [
         {
-            method: 'GET',
-            path: '/orders/:id', // Defina o parâmetro ":id" para tornar o ID dinâmico
+            method: 'POST',
+            path: '/order', 
             handler: 'order.customAction',
             config: {
                 auth: false,
