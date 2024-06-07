@@ -8,106 +8,77 @@ const axios = require('axios');
 
 module.exports = createCoreController('api::order.order', ({ strapi }) => ({
     async customAction(ctx) {
+      async function fetchPaymentData() {
+        const body = ctx.request.body
+        const paymentUpdateId = JSON.parse(body).data.id
         try {
-            const orderId = ctx.params.id; // Acessa o ID dinâmico da rota
-
-            // Busca o objeto correspondente ao ID no banco de dados
-            const order = await strapi.db.query('api::order.order').findOne({
-                where: {
-                 id: orderId
-                },
-              });
-              
-            if (!order) {
-                // Se o pedido não for encontrado, retorne um erro 404
-                ctx.status = 404;
-                ctx.send({ message: 'Pedido não encontrado.' });
-                return;
+          const response = await axios.get(`https://api.mercadopago.com/v1/payments/${paymentUpdateId}`, {
+            headers: {
+              "Authorization": "Bearer APP_USR-3703595398302708-060419-7c807ffd60b54f05c307ea4626936202-261665886"
             }
+          });
 
-     
-
-            const options = {
-  method: 'POST',
-  headers: {
-    'Authorization': 'Bearer 290B437BE5AA411FAAE6CA1638B99F56',
-    'Content-type': 'application/json'
-  },
-  body: JSON.stringify({
-    reference_id: 'REFERÊNCIA DO PRODUTO',
-    expiration_date: '2023-08-14T19:09:10-03:00',
-    customer: {
-      name: 'João teste',
-      email: 'joao@teste.com',
-      tax_id: '00000000000',
-      phone: {country: '+55', area: '27', number: '999999999'}
-    },
-    customer_modifiable: true,
-    items: [
-      {
-        reference_id: 'ITEM01',
-        name: 'Nome do Produto',
-        quantity: 1,
-        unit_amount: 500,
-        image_url: 'https://www.petz.com.br/blog//wp-content/upload/2018/09/tamanho-de-cachorro-pet-1.jpg'
-      }
-    ],
-    additional_amount: 0,
-    discount_amount: 0,
-    shipping: {
-      type: 'FREE',
-      amount: 0,
-      service_type: 'PAC',
-      address: {
-        country: 'BRA',
-        region_code: 'SP',
-        city: 'São Paulo',
-        postal_code: '01452002',
-        street: 'Faria Lima',
-        number: '1384',
-        locality: 'Pinheiros',
-        complement: '5 andar'
-      },
-      address_modifiable: true,
-      box: {dimensions: {length: 15, width: 10, height: 14}, weight: 300}
-    },
-    payment_methods: [
-      {type: 'credit_card', brands: ['mastercard']},
-      {type: 'credit_card', brands: ['visa']},
-      {type: 'debit_card', brands: ['visa']},
-      {type: 'PIX'},
-      {type: 'BOLETO'}
-    ],
-    payment_methods_configs: [
-      {
-        type: 'credit_card',
-        config_options: [{option: 'installments_limit', value: '1'}]
-      }
-    ],
-    soft_descriptor: 'xxxx',
-    redirect_url: 'https://pagseguro.uol.com.br',
-    return_url: 'https://pagseguro.uol.com.br',
-    notification_urls: ['https://pagseguro.uol.com.br']
-  })
-};
-            
-            // Realiza a solicitação POST para a API do PagSeguro usando o Axios
-            try {
-                const response = await axios.post('https://sandbox.api.pagseguro.com/checkouts', options);
-            
-                // Os dados da resposta já estão disponíveis em response.data
-                ctx.send(response)
-                console.log(response.data);
-            } catch (err) {
-                console.error(err);
-            }
-            
-            console.log(order)
-            ctx.send(order);
-        } catch (err) {
-            console.error('Erro ao lidar com a solicitação:', err);
-            ctx.status = 500;
-            ctx.send('Erro ao processar a solicitação.');
+          if (response.status === 200) {
+            return response.data;
+          } else {
+            throw new Error('Erro na solicitação ao Mercado Pago');
+          }
+        } catch (error) {
+          console.error('Erro ao buscar dados de pagamento:', error);
+          return {
+            error: true,
+            message: 'Erro na solicitação ao Mercado Pago'
+          };
         }
-    }
-}));
+      }
+
+      async function setPaymentStatus(){
+        const paymentUpdateData = await fetchPaymentData().then(res=>res).then(data=>data).catch(err=>err)
+        const {external_id , status } = paymentUpdateData
+        
+        if(status == 'approved'){
+          const order = await strapi.db.query('api::order.order').findOne({
+            where: {
+             id: external_id
+            },
+            populate: {owner: true}
+          })
+
+          const userId = order.owner.id
+          const user = await strapi.db.query('plugin::users-permissions.user').findOne({
+            where: {
+             id: userId
+            },
+            populate: {owner: true}
+          })
+
+           if (!order || user) {
+              // Se o pedido não for encontrado, retorne um erro 404
+              ctx.status = 404;
+              ctx.send({ message: 'Pedido não encontrado.' });
+              return;
+          }
+
+          function setPackType(){
+            switch(order.description){
+              case 'Pacote 1':
+                return 1
+              case 'Pacote 2':
+                return 5
+              case 'Pacote 3':
+                return 10  
+            }
+          }
+
+          await strapi.entityService.update('plugin::users-permissions.user', userId, {
+            data: {
+              post_quantity: Number(user.post_quantity) + setPackType(),
+            },
+          });
+
+          ctx.status = 200
+          return ctx.send({message: 'Pedido Aprovado'})
+        }
+      }
+      return setPaymentStatus()
+}}))
