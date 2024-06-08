@@ -34,12 +34,11 @@ module.exports = createCoreController('api::order.order', ({ strapi }) => ({
 
       async function setPaymentStatus(){
         const paymentUpdateData = await fetchPaymentData().then(res=>res).then(data=>data).catch(err=>err)
-        const {external_id , status } = paymentUpdateData
-        return {external_id, status}
+        const {external_reference , status } = paymentUpdateData
         if(status == 'cancelled'){
           const order = await strapi.db.query('api::order.order').findOne({
             where: {
-             id: external_id
+             id: external_reference
             },
             populate: {owner: true}
           })
