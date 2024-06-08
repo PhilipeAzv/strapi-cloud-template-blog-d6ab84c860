@@ -51,7 +51,7 @@ module.exports = createCoreController('api::order.order', ({ strapi }) => ({
             populate: {owner: true}
           })
          
-           if (!order || user) {
+           if (!order || !user) {
               // Se o pedido não for encontrado, retorne um erro 404
               ctx.status = 404;
               ctx.send({ message: 'Pedido não encontrado.' });
