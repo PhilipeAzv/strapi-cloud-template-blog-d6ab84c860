@@ -80,5 +80,5 @@ module.exports = createCoreController('api::order.order', ({ strapi }) => ({
           return ctx.send({message: 'Pedido Aprovado'})
         }
       }
-      return setPaymentStatus()
+      return ctx.request.body
 }}))
