@@ -10,10 +10,8 @@ module.exports = createCoreController('api::order.order', ({ strapi }) => ({
     async customAction(ctx) {
       async function fetchPaymentData() {
         const body = ctx.request.body
-        //const paymentUpdateId = JSON.parse(body).data.id
-        return body
         try {
-          const response = await axios.get(`https://api.mercadopago.com/v1/payments/${paymentUpdateId}`, {
+          const response = await axios.get(`https://api.mercadopago.com/v1/payments/${body.data.id}`, {
             headers: {
               "Authorization": "Bearer TEST-7141074451163457-042814-3cd59ba6314c0e4b169e169c293fd8e0-90808589"
             }
@@ -34,9 +32,8 @@ module.exports = createCoreController('api::order.order', ({ strapi }) => ({
       }
 
       async function setPaymentStatus(){
-      //  const paymentUpdateData = await fetchPaymentData().then(res=>res).then(data=>data).catch(err=>err)
-       // const {external_reference , status } = paymentUpdateData
-        return fetchPaymentData()
+        const paymentUpdateData = await fetchPaymentData()
+        const {external_reference , status } = paymentUpdateData
         if(status == 'approved'){
           const order = await strapi.db.query('api::order.order').findOne({
             where: {
