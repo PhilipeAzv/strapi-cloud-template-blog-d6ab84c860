@@ -35,7 +35,6 @@ module.exports = createCoreController('api::order.order', ({ strapi }) => ({
       async function setPaymentStatus(){
         //const paymentUpdateData = await fetchPaymentData().then(res=>res).then(data=>data).catch(err=>err)
         const paymentUpdateData = ctx.request.body
-        return paymentUpdateData
         const {external_reference , status } = paymentUpdateData
         if(status == 'approved'){
           const order = await strapi.db.query('api::order.order').findOne({
@@ -52,7 +51,7 @@ module.exports = createCoreController('api::order.order', ({ strapi }) => ({
             },
             populate: {owner: true}
           })
-         
+         return {order, user}
            if (!order || !user) {
               // Se o pedido não for encontrado, retorne um erro 404
               ctx.status = 404;
