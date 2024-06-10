@@ -10,8 +10,8 @@ module.exports = createCoreController('api::order.order', ({ strapi }) => ({
     async customAction(ctx) {
       async function fetchPaymentData() {
         const body = ctx.request.body
-        const paymentUpdateId = JSON.parse(body).data.id
-        return {body, paymentUpdateId}
+        //const paymentUpdateId = JSON.parse(body).data.id
+        return body
         try {
           const response = await axios.get(`https://api.mercadopago.com/v1/payments/${paymentUpdateId}`, {
             headers: {
