@@ -34,7 +34,8 @@ module.exports = createCoreController('api::order.order', ({ strapi }) => ({
 
       async function setPaymentStatus(){
         const paymentUpdateData = await fetchPaymentData().then(res=>res).then(data=>data).catch(err=>err)
-        const {external_reference , status } = paymentUpdateData
+      //  const {external_reference , status } = paymentUpdateData
+return paymentUpdateData
         if(status == 'approved'){
           const order = await strapi.db.query('api::order.order').findOne({
             where: {
