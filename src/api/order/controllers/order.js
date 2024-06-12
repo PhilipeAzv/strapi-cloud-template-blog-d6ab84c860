@@ -13,7 +13,7 @@ module.exports = createCoreController('api::order.order', ({ strapi }) => ({
         try {
           const response = await axios.get(`https://api.mercadopago.com/v1/payments/${body.data.id}`, {
             headers: {
-              "Authorization": "Bearer APP_USR-7141074451163457-042814-c601e2c043ce94a1fc9c0a88f4ca6244-90808589"
+              "Authorization": "Bearer APP_USR-3703595398302708-060419-7c807ffd60b54f05c307ea4626936202-261665886"
             }
           });
 
